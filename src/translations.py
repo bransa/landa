@@ -1,7 +1,4 @@
-# is dictionary the best choice to define our look up tables?
-# we can build logic with these dicts and in the future
-# think about external ref solutions 
-# (structured files or eventually a database?)
+
 
 words = {
     'sir': 'mukwai',
@@ -22,7 +19,4 @@ phrases = {
     'and you':'nga iweh',
     'nice to meet you':'chisuma',
     'my name is':'ninembo',
-    'i am from':'nafumina ku'
-}
-
-
+    'i am from':'nafumina ku'}

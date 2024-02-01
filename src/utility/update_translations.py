@@ -1,34 +1,39 @@
-# edits translations.py
+import csv
+import re
 import os
-import platform
-import getpass
-import os, fnmatch
 
+translations_dict={}
+translations_list=[]
+	
+translations_dict = {}
 
-def find_files(directory, pattern):
-    for root, dirs, files in os.walk(directory):
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                filename = os.path.join(root, basename)
-                yield filename
+fpath = os.getcwd() + "/lib" # should probably replace with canary or else
+fpath = fpath.replace('/src','')
+fname = 'translations.csv'
+pattern = r'(\w+),(\w+)'
+if os.path.isfile(fpath+"/"+fname):
+    source_file = open(fpath+"/"+fname, 'r')
+    source_obj = csv.reader(source_file)
 
+    for pair in source_obj:
+        if pair:
+            key   = pair[0]
+            value = pair[1]
+            translations_dict[key] = value
+            translations_list.append([key,value])
+       
+            
+    '''with open(fpath+"/"+fname, "r") as source_file:
+        reader_obj = csv.reader(source_file)
+        
+        for line in reader_obj:
+            for pair in line:
+                match = re.match(r'(\w+),(\w+)',pair)
+                if match:
+                    key, value = match.groups()
+                    translations_dict[key] = value
+                    '''
+else:
+    print('translations csv not found.\n')    
 
-for filename in find_files('src', 'translations.py'):
-    print (f'(Found dictionary source: {filename}))'
-
-
-# first find the directory where the translations file is stored
-os_name = platform.system()
-user_str = getpass.getuser()
-
-if 'windows' in os_name.lower(): #not tested !!!
-    search_path = os.path.join('..','Documents and Settings',user_str)
-elif 'linux' in os_name.lower():
-    search_path = os.path.join('/home',user_str)
-
-translations_file = find_file(search_path,'translations.py')
-
-with open('/home/bransa/Documents/GitHub/landa/src/translations.py') as f:
-    lines = f.readlines()
-print(lines)
-
+print(translations_dict)
