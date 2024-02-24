@@ -3,11 +3,14 @@ import re
 import urllib.request
 from bs4 import BeautifulSoup
 from bible import books, ignore_words, class_name
+import os
 
-def extract_content(url, class_name, ignore_words=None):
-    if ignore_words is None:
-        ignore_words = []
+def preprocess_text(text):
+    words = re.findall(r'\b\w+\b', text)
+    filtered_words = [word.lower() for word in words if word.lower() not in map(str.lower, ignore_words)]
+    return ' '.join(filtered_words)
 
+def extract_content(url, class_name):
     with urllib.request.urlopen(url) as response:
         html = response.read().decode('utf-8')
 
@@ -15,21 +18,7 @@ def extract_content(url, class_name, ignore_words=None):
     element = soup.find('div', class_=class_name)
     text_result = element.get_text(separator=' ') if element else ''
 
-    words = re.findall(r'\b\w+\b', text_result)
-    filtered_words = [word.lower() for word in words if word.lower() not in map(str.lower, ignore_words)]
-
-    unique_words_set = set()
-    filtered_words = []
-
-    for word in words:
-        lowercase_word = word.lower()
-        if lowercase_word not in map(str.lower, ignore_words) and lowercase_word not in unique_words_set:
-            unique_words_set.add(lowercase_word)
-            filtered_words.append(lowercase_word)
-
-    merged_text_result = ' '.join(filtered_words)
-
-    return merged_text_result, filtered_words
+    return preprocess_text(text_result)
 
 base_url_esv = 'https://www.bible.com/bible/59/'
 ill_part_esv = '.ESV'
@@ -39,23 +28,23 @@ base_url_ill15 = 'https://www.bible.com/bible/1097/'
 ill_part_ill15 = '.ILL15'
 urls_ill15 = [base_url_ill15 + f'{book}.{i}{ill_part_ill15}' for book, chapters in books.items() for i in range(1, chapters + 1)]
 
-csv_filename = 'translations.csv'
+esv_words = []
+ill15_words = []
+
+for url in urls_esv:
+    esv_words.append(extract_content(url, class_name))
+    print(url)
+
+for url in urls_ill15:
+    ill15_words.append(extract_content(url, class_name))
+    print(url)
+
+csv_filename = os.path.join('..', 'lib', 'translations.csv')  # Path to lib folder in the parent directory
 with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
     csv_writer = csv.writer(csvfile)
-    csv_writer.writerow(['key', 'value', 'ill15'])
+    csv_writer.writerow(['ESV Words', 'ILL15 Words'])
 
-    for url in urls_esv:
-        text_result, words_result = extract_content(url, class_name, ignore_words)
-        csv_writer.writerows([[word, text_result, ''] for word in words_result])
+    for esv_word, ill15_word in zip(esv_words, ill15_words):
+        csv_writer.writerow([esv_word, ill15_word])
 
-        print(url, ":")
-        print(text_result)
-
-    for url in urls_ill15:
-        text_result, words_result = extract_content(url, class_name, ignore_words)
-        csv_writer.writerows([[word, '', text_result] for word in words_result])
-
-        print(url, ":")
-        print(text_result)
-
-print(csv_filename)
+print("CSV file written:", csv_filename)
